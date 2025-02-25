@@ -9,10 +9,10 @@ from collections import deque
 import seaborn as sns  # 新增
 
 
-# 配置日志记录
+# Configuring Logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-# 游戏常量
+# Game Constants
 WIDTH, HEIGHT = 1000, 800
 GRID_SIZE = 40
 GRID_WIDTH = (WIDTH - 200) // GRID_SIZE
@@ -28,7 +28,7 @@ COLORS = {
     'DARK_GRAY': (50, 50, 50)
 }
 
-# 初始化Pygame
+# Initializing Pygame
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Advanced Pac-Man Q-Learning")
@@ -36,14 +36,14 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
 bold_font = pygame.font.Font(None, 32)
 
-# 加载图片素材
+# Loading image material
 try:
     player_img = pygame.image.load("player.webp")
     enemy_img = pygame.image.load("enemy.webp")
     gold_img = pygame.image.load("gold.webp")
-    logging.info("图片加载成功！")
+    logging.info("Image loaded successfully!")
 except Exception as e:
-    logging.error(f"图片加载失败: {e}")
+    logging.error(f"Image loading failed: {e}")
     player_img = pygame.Surface((GRID_SIZE, GRID_SIZE))
     player_img.fill(COLORS['YELLOW'])
     enemy_img = pygame.Surface((GRID_SIZE, GRID_SIZE))
@@ -51,18 +51,18 @@ except Exception as e:
     gold_img = pygame.Surface((GRID_SIZE, GRID_SIZE))
     gold_img.fill(COLORS['GREEN'])
 
-# 调整图片大小
+# Resize an image
 player_img = pygame.transform.scale(player_img, (GRID_SIZE, GRID_SIZE))
 enemy_img = pygame.transform.scale(enemy_img, (GRID_SIZE, GRID_SIZE))
 gold_img = pygame.transform.scale(gold_img, (GRID_SIZE, GRID_SIZE))
 
-# 强化学习核心参数
-alpha = 0.7  # 初始学习率
-gamma = 0.97  # 折扣因子
-epsilon = 1.0  # 初始探索率
+# Reinforcement Learning Core Parameters
+alpha = 0.7  # Initial learning rate
+gamma = 0.97  # discount factor
+epsilon = 1.0  # initial exploration rate
 epsilon_decay = 0.9995
-epsilon_min = 0.02  # 基础最小值
-adaptive_epsilon_min = 0.02  # 动态最小值
+epsilon_min = 0.02  # basic minimum value
+adaptive_epsilon_min = 0.02  # dynamic minimum value
 min_alpha = 0.1
 batch_size = 256
 target_update = 75
@@ -71,7 +71,7 @@ success_threshold = 0.25
 boost_factor = 1.5
 FPS = 30
 
-# 优先经验回放缓冲区
+# Prioritize experience replay buffer
 class PrioritizedReplayBuffer:
     def __init__(self, capacity):
         self.buffer = deque(maxlen=capacity)
@@ -93,7 +93,7 @@ class PrioritizedReplayBuffer:
 
 replay_buffer = PrioritizedReplayBuffer(10000)
 
-# 双Q网络架构
+# Dual Q network architecture
 class DoubleQTable:
     def __init__(self, state_dims, action_size):
         self.main = np.random.uniform(-0.1, 0.1, state_dims + (action_size,))
@@ -102,7 +102,7 @@ class DoubleQTable:
     def update_target(self):
         self.target = np.copy(self.main)
 
-# 信息面板类
+# Information panel class
 class InfoPanel:
     def __init__(self):
         self.width = 200
@@ -138,7 +138,7 @@ class InfoPanel:
             screen.blit(log_text, (self.x + 10, log_y))
             log_y += 20
 
-# 迷宫生成
+# Maze Generation
 def generate_maze(width, height):
     maze = []
     for y in range(height):
@@ -157,12 +157,12 @@ obstacles = [(x, y) for y, row in enumerate(maze) for x, char in enumerate(row) 
 def is_obstacle(x, y):
     return (x, y) in obstacles
 
-# 强化版Pacman类
+# Pac-Man class
 class Pacman:
     def __init__(self):
         self.reset()
         self.path_history = deque(maxlen=5)
-        self.visited_grids = np.zeros((GRID_WIDTH, GRID_HEIGHT))  # 新增访问统计矩阵
+        self.visited_grids = np.zeros((GRID_WIDTH, GRID_HEIGHT))  # Added access statistics matrix
 
     def reset(self):
         self.x, self.y = GRID_WIDTH // 2, GRID_HEIGHT // 2
@@ -183,7 +183,7 @@ class Pacman:
         self.x, self.y = new_x, new_y
         self.visited.add((new_x, new_y))
         self.path_history.append((new_x, new_y))
-        self.visited_grids[self.x][self.y] += 1  # 更新访问次数
+        self.visited_grids[self.x][self.y] += 1  # Update Visit Count
 
     def get_state(self):
         px, py = self.x, self.y
@@ -195,10 +195,10 @@ class Pacman:
             min(4, len(food.positions) // 2),
             int(px > GRID_WIDTH // 2),
             sum(1 for e in enemies if abs(e.x - px) < 3),
-            min(4, sum(1 for p in food.positions if abs(p[0] - px) < 4))  # 修正括号
+            min(4, sum(1 for p in food.positions if abs(p[0] - px) < 4))
         )
 
-# 食物类
+# Food class
 class Food:
     def __init__(self):
         self.positions = []
@@ -215,7 +215,7 @@ class Food:
             return True
         return False
 
-# 敌人类
+# Enemy class
 class Enemy:
     def __init__(self):
         self.reset()
@@ -258,9 +258,9 @@ class Enemy:
             new_x += 1
         self.x, self.y = new_x, new_y
 
-# 增强奖励函数
+# Reward function
 def calculate_reward(pacman, food, enemies):
-    reward = 2  # 基础移动奖励
+    reward = 2  # Basic Movement Rewards
     px, py = pacman.x, pacman.y
     remaining = len(food.positions)
 
@@ -293,17 +293,17 @@ def calculate_reward(pacman, food, enemies):
 
     return reward
 
-# 初始化游戏对象
+# Game object initialization
 pacman = Pacman()
 food = Food()
 enemies = [Enemy() for _ in range(2)]
 info_panel = InfoPanel()
 
-# 状态维度
+# Status Dimension
 state_dims = (3, 3, 2, 2, 5, 2, 3, 5)
 q_table = DoubleQTable(state_dims, len(actions))
 
-# 训练参数
+# Training parameters
 max_episodes = 1000
 max_steps = 1000
 episode_rewards = []
@@ -312,7 +312,7 @@ success_count = []
 epsilon_history = []
 log_messages = deque(maxlen=5)
 
-# 优化训练循环
+# Optimizing the training loop
 for episode in range(1, max_episodes + 1):
     pacman.reset()
     food.reset()
@@ -325,7 +325,7 @@ for episode in range(1, max_episodes + 1):
     while steps < max_steps:
         state = pacman.get_state()
 
-        # ε-贪婪策略
+        # ε-Greedy Strategy
         if random.random() < epsilon:
             action = random.choice(actions)
             action_idx = actions.index(action)
@@ -333,38 +333,38 @@ for episode in range(1, max_episodes + 1):
             action_idx = np.argmax(q_table.main[state])
             action = actions[action_idx]
 
-        # 执行动作
+        # Execute an action
         pacman.move(action)
 
-        # 敌人移动
+
+        # Enemy moves
         for e in enemies: e.smart_move(pacman)
 
-        # 计算奖励
+        # Calculate reward
         reward = calculate_reward(pacman, food, enemies)
         total_reward += reward
 
-        # 获取新状态
+        # Get new state
         next_state = pacman.get_state()
         done = any(pacman.x == e.x and pacman.y == e.y for e in enemies)
         if not food.positions and not done:
             success = 1
             done = True
 
-        # 存储经验
+        # Store experience
         td_error = abs(reward + gamma * np.max(q_table.target[next_state]) - q_table.main[state][action_idx])
         replay_buffer.add((state, action_idx, reward, next_state, done, td_error))
 
-        # 经验回放
-        # 经验回放
+        # Replay experience
         if len(replay_buffer.buffer) >= batch_size:
             batch, indices, weights = replay_buffer.sample(batch_size)
             new_priorities = []
 
-            # 使用 enumerate 获取索引 i 和样本 exp
+            # Use enumerate to get index i and sample exp
             for i, exp in enumerate(batch):
                 s, a_idx, r, ns, d, _ = exp
 
-                # 状态裁剪（确保维度正确）
+                # State clipping (make sure the dimensions are correct)
                 s = tuple(
                     max(0, min(int(x), dim_size - 1))
                     for x, dim_size in zip(s, state_dims))
@@ -374,25 +374,25 @@ for episode in range(1, max_episodes + 1):
                     for x, dim_size in zip(ns, state_dims))
 
 
-                # 计算目标值和TD误差
+                # Calculate target value and TD error
                 target = r + (1 - d) * gamma * np.max(q_table.target[ns])
                 delta = abs(target - q_table.main[s][a_idx])
 
-                # 使用 weights[i] 替代 indices.index(exp)
+                # Use weights[i] instead of indices.index(exp)
                 q_table.main[s][a_idx] += alpha * (target - q_table.main[s][a_idx]) * weights[i]
 
                 new_priorities.append(delta + 1e-5)
                 episode_q.append(delta)
 
-                # 更新优先级
+                # Update priority
                 for idx, prio in zip(indices, new_priorities):
                     replay_buffer.priorities[idx] = prio
 
-        # 同步目标网络
+        # Synchronize target network
         if steps % target_update == 0:
             q_table.update_target()
 
-        # 渲染
+        # Rendering
         screen.fill(COLORS['GRAY'])
         for y, row in enumerate(maze):
             for x, char in enumerate(row):
@@ -413,12 +413,12 @@ for episode in range(1, max_episodes + 1):
             break
         steps += 1
 
-    # 动态参数调整
+    # Dynamic parameter adjustment
     alpha = max(min_alpha, 0.5 * (1 + np.cos(episode / 500 * np.pi)) * 0.7)
     if len(success_count) >= 100 and np.mean(success_count[-100:]) > 0.3:
         alpha *= 0.995
 
-    # ε策略调整
+    # εStrategy Adjustment
     epsilon = max(adaptive_epsilon_min, epsilon * epsilon_decay)
     if episode % 100 == 0 and len(success_count) >= 100:
         recent_success = np.mean(success_count[-100:])
@@ -431,27 +431,27 @@ for episode in range(1, max_episodes + 1):
     if episode % 400 == 0:
         epsilon = min(0.4, max(adaptive_epsilon_min, epsilon * 1.3))
 
-    # 记录数据
+    # Recording Data
     success_count.append(success)
     episode_rewards.append(total_reward)
     episode_avg_q.append(np.mean(episode_q) if episode_q else 0)
     epsilon_history.append(epsilon)
 
-    # 日志记录
+    # Logging
     log_msg = f"Ep {episode} | Reward: {total_reward:.1f} | Avg QΔ: {episode_avg_q[-1]:.2f} | ε: {epsilon:.4f} | Success: {success}"
     logging.info(log_msg)
     log_messages.append(log_msg)
 
-    # 定期保存模型
+    # Save the model regularly
     if episode % 100 == 0:
         np.save(f"q_table_ep{episode}.npy", q_table.main)
 
-# 可视化增强
+# Visualization enhancement
 def plot_training():
     plt.figure(figsize=(18, 12))
-    plt.style.use('seaborn-darkgrid')  # 全局样式
+    plt.style.use('seaborn-darkgrid')
 
-    # 1. 奖励趋势图
+    # 1. Reward Trend Chart
     plt.subplot(2, 2, 1)
     plt.plot(episode_rewards, alpha=0.3, color='#1f77b4', label='Raw')
     reward_ma = np.convolve(episode_rewards, np.ones(100)/100, mode='valid')
@@ -460,22 +460,22 @@ def plot_training():
     plt.legend()
     plt.grid(alpha=0.4)
 
-    # 2. Q值动态图
+    # 2. Q value dynamic diagram
     plt.subplot(2, 2, 2)
     plt.plot(episode_avg_q, color='#2ca02c', linewidth=2)
     plt.title("Q-Value Dynamics", fontsize=14)
     plt.grid(alpha=0.4)
 
-    # 3. 探索率演化图
+    # 3. Exploration rate evolution graph
     plt.subplot(2, 2, 3)
     plt.plot(epsilon_history, color='#d62728')
     plt.yscale('log')
     plt.title("Exploration Rate (ε)", fontsize=14)
     plt.grid(alpha=0.4)
 
-    # 4. 迷宫探索热力图
+    # 4. Maze exploration heat map
     plt.subplot(2, 2, 4)
-    log_visited = np.log1p(pacman.visited_grids.T)  # 对数变换
+    log_visited = np.log1p(pacman.visited_grids.T)
     sns.heatmap(
         log_visited,
         cmap="YlGnBu",
@@ -498,14 +498,14 @@ def plot_training():
     plt.xlabel("X Coordinate (pixels)", fontsize=12)
     plt.ylabel("Y Coordinate (pixels)", fontsize=12)
 
-    # 统一保存
+    # Unified storage
     plt.tight_layout()
     plt.savefig('training_report_v2.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 plot_training()
 
-# 保持窗口
+# Keep Window
 running = True
 while running:
     for event in pygame.event.get():
